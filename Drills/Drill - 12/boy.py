@@ -142,7 +142,13 @@ class GhostState:
     def draw(boy):
         boy.image.opacify(1)
         boy.image.clip_composite_draw(int(boy.frame) * 100, 300, 100, 100, DEGREE_PER_TIME / 2, '', boy.x - 25, boy.y - 25, 100, 100)
-
+        if boy.timer < 1:
+            boy.image.opacify(random.randint(1, 100) * 0.01)
+            if boy.degree > DEGREE_PER_TIME * 3 / 2:
+                boy.image.clip_composite_draw(int(boy.frame) * 100, 300, 100, 100, -boy.degree, '', boy.x - 25 + ROTATE_PER_TIME * math.cos(-boy.degree), boy.y - 25, 100, 100)
+        else:
+            boy.image.opacify(random.randint(1, 100) / 100)
+            boy.image.clip_draw(int(boy.frame) * 100, 300, 100, 100, boy.x - 25 + 3 * PIXEL_PER_METER * math.cos(-boy.degree), boy.y - 25 + ROTATE_PER_TIME * math.sin(-boy.degree))
 
 next_state_table = {
     IdleState: {RIGHT_UP: RunState, LEFT_UP: RunState, RIGHT_DOWN: RunState, LEFT_DOWN: RunState, SLEEP_TIMER: SleepState, SPACE: IdleState},
