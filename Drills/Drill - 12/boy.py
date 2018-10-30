@@ -4,6 +4,7 @@ from ball import Ball
 
 import game_world
 import random
+import math
 
 # Boy Run Speed
 PIXEL_PER_METER = (10.0 / 0.3)
@@ -11,7 +12,8 @@ RUN_SPEED_KMPH = 20.0
 RUN_SPEED_MPM = (RUN_SPEED_KMPH * 1000.0 / 60.0)
 RUN_SPEED_MPS = (RUN_SPEED_MPM / 60.0)
 RUN_SPEED_PPS = (RUN_SPEED_KMPH * PIXEL_PER_METER)
-ANGLE_PER_SEC = 720.0
+DEGREE_PER_TIME = 3.141592
+ROTATE_PER_TIME = PIXEL_PER_METER * 3
 
 # Boy Action Speed
 TIME_PER_ACTION = 0.5
@@ -32,7 +34,6 @@ key_event_table = {
 # Boy States
 
 class IdleState:
-
     @staticmethod
     def enter(boy, event):
         if event == RIGHT_DOWN:
@@ -43,19 +44,21 @@ class IdleState:
             boy.velocity -= RUN_SPEED_PPS
         elif event == LEFT_UP:
             boy.velocity += RUN_SPEED_PPS
-        boy.timer = 1000
+        boy.timer = get_time()
+        boy.cur_time = get_time()
+        boy.sleep_timer = boy.timer + 10.0
+
 
     @staticmethod
     def exit(boy, event):
         if event == SPACE:
             boy.fire_ball()
-        pass
 
     @staticmethod
     def do(boy):
         boy.frame = (boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 8
-        boy.timer -= 1
-        if boy.timer == 0:
+        boy.timer = get_time()
+        if boy.timer >= boy.sleep_timer :
             boy.add_event(SLEEP_TIMER)
 
     @staticmethod
@@ -100,10 +103,10 @@ class RunState:
 
 
 class SleepState:
-
     @staticmethod
     def enter(boy, event):
         boy.frame = 0
+        boy.add_event(GHOST)
 
     @staticmethod
     def exit(boy, event):
@@ -120,18 +123,35 @@ class SleepState:
         else:
             boy.image.clip_composite_draw(int(boy.frame) * 100, 200, 100, 100, -3.141592 / 2, '', boy.x + 25, boy.y - 25, 100, 100)
 
-class GhostState :
-    pass
+class GhostState:
+    @staticmethod
+    def enter(boy, event):
+        boy.timer = 0
+        boy.cur_time = get_time()
+        boy.degree = DEGREE_PER_TIME
+
+    def exit(boy,event):
+        boy.image.opacify(1)
+
+    def do(boy):
+        boy.frame = (boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 8
+        boy.degree += DEGREE_PER_TIME * game_framework.frame_time
+        boy.timer += get_time() - boy.cur_time
+        boy.cur_time = get_time()
+
+    def draw(boy):
+        boy.image.opacify(1)
+        boy.image.clip_composite_draw(int(boy.frame) * 100, 300, 100, 100, DEGREE_PER_TIME / 2, '', boy.x - 25, boy.y - 25, 100, 100)
+
 
 next_state_table = {
     IdleState: {RIGHT_UP: RunState, LEFT_UP: RunState, RIGHT_DOWN: RunState, LEFT_DOWN: RunState, SLEEP_TIMER: SleepState, SPACE: IdleState},
     RunState: {RIGHT_UP: IdleState, LEFT_UP: IdleState, LEFT_DOWN: IdleState, RIGHT_DOWN: IdleState, SPACE: RunState},
-    SleepState: {LEFT_DOWN: RunState, RIGHT_DOWN: RunState, LEFT_UP: RunState, RIGHT_UP: RunState, SPACE: IdleState, GHOST:GhostState},
-    GhostState: { LEFT_DOWN: RunState, RIGHT_DOWN: RunState, LEFT_UP: RunState, RIGHT_UP: RunState, SPACE:IdleState }
+    SleepState: {LEFT_DOWN: RunState, RIGHT_DOWN: RunState, LEFT_UP: RunState, RIGHT_UP: RunState, SPACE: IdleState, GHOST : GhostState},
+    GhostState: {LEFT_DOWN: RunState, RIGHT_DOWN: RunState, LEFT_UP: RunState, RIGHT_UP: RunState, SPACE : IdleState }
 }
 
 class Boy:
-
     def __init__(self):
         self.x, self.y = 1600 // 2, 90
         # Boy is only once created, so instance image loading is fine
@@ -143,7 +163,6 @@ class Boy:
         self.event_que = []
         self.cur_state = IdleState
         self.cur_state.enter(self, None)
-
 
     def fire_ball(self):
         ball = Ball(self.x, self.y, self.dir*3)
