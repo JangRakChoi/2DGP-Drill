@@ -18,6 +18,7 @@ key_event_table = {
     (SDL_KEYUP, SDLK_LSHIFT): SHIFT_UP
 }
 
+
 # Boy States
 
 class IdleState:
@@ -78,7 +79,7 @@ class RunState:
         boy.frame = (boy.frame + 1) % 8
         boy.timer -= 1
         boy.x += boy.velocity
-        boy.x = clamp(25, boy.x, 1280 - 25)
+        boy.x = clamp(25, boy.x, 1600 - 25)
 
     @staticmethod
     def draw(boy):
@@ -86,6 +87,7 @@ class RunState:
             boy.image.clip_draw(boy.frame * 100, 100, 100, 100, boy.x, boy.y)
         else:
             boy.image.clip_draw(boy.frame * 100, 0, 100, 100, boy.x, boy.y)
+
 
 class SleepState:
     @staticmethod
@@ -131,7 +133,7 @@ class DashState :
         boy.frame = (boy.frame + 1) % 8
         boy.timer -= 1
         boy.x += boy.velocity * 5
-        boy.x = clamp(25, boy.x, 1280 - 25)
+        boy.x = clamp(25, boy.x, 1600 - 25)
         if boy.timer == 0:
             boy.add_event(DASH_TIMER)
 
