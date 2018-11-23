@@ -70,14 +70,16 @@ class WalkingState:
         boy.x += boy.x_velocity * game_framework.frame_time
         boy.y += boy.y_velocity * game_framework.frame_time
 
-        #boy.x = clamp(0, boy.x, boy.bg.w)
-        #boy.y = clamp(0, boy.y, boy.bg.h)
+        boy.x = clamp(0, boy.x, boy.bg.w)
+        boy.y = clamp(0, boy.y, boy.bg.h)
 
 
     @staticmethod
     def draw(boy):
         #cx, cy = boy.x - boy.bg.window_left, boy.y - boy.bg.window_bottom
-        cx, cy = boy.canvas_width//2, boy.canvas_height//2
+        boy.cx, boy.cy = boy.x - boy.bg.window_left, boy.y - boy.bg.window_bottom
+        cx, cy = boy.cx, boy.cy
+        #cx, cy = boy.canvas_width//2, boy.canvas_height//2
         if boy.x_velocity > 0:
             boy.image.clip_draw(int(boy.frame) * 100, 100, 100, 100, cx, cy)
             boy.dir = 1
@@ -107,7 +109,7 @@ next_state_table = {
 
 
 class Boy:
-
+    x, y = 0, 0
     def __init__(self):
         self.canvas_width = get_canvas_width()
         self.canvas_height = get_canvas_height()
@@ -120,9 +122,9 @@ class Boy:
         self.event_que = []
         self.cur_state = WalkingState
         self.cur_state.enter(self, None)
-
         self.eat_sound = load_wav('pickup.wav')
         self.eat_sound.set_volume(32)
+        self.cx, self.cy = 0, 0
 
 
     def eat(self, ball):
@@ -135,8 +137,8 @@ class Boy:
 
     def set_background(self, bg):
         self.bg = bg
-        self.x = self.bg.w / 2
-        self.y = self.bg.h / 2
+        Boy.x = self.bg.w / 2
+        Boy.y = self.bg.h / 2
 
     def add_event(self, event):
         self.event_que.insert(0, event)
@@ -151,7 +153,7 @@ class Boy:
 
     def draw(self):
         self.cur_state.draw(self)
-        self.font.draw(self.canvas_width//2 - 60, self.canvas_height//2 + 50, '(%5d, %5d)' % (self.x, self.y), (255, 255, 0))
+        self.font.draw(self.canvas_width//2 - 60, self.canvas_height//2 + 50, '(%5d, %5d)' % (Boy.x, Boy.y), (255, 255, 0))
 
     def handle_event(self, event):
         if (event.type, event.key) in key_event_table:
