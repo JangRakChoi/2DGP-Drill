@@ -169,3 +169,5 @@ class Boy:
             key_event = key_event_table[(event.type, event.key)]
             self.add_event(key_event)
 
+    def return_time(self):
+        return get_time() - self.start_time
